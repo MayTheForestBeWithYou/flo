@@ -30,7 +30,7 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Run Tests
-        run: cargo test --workspace --all-targets
+        run: cargo test --workspace --all-targets --features test-integration
 
   create-release:
     name: Create Release

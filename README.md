@@ -40,6 +40,7 @@ Here is a look at what Flo is being built to do:
 ## Contributing
 This is an open-source project, and suggestions are appreciated. 
 Currently, this is a personal project, but we will update this section when we are ready to invite contributors.
+More information for when you want to start contributing can be found in [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
-This project is licensed under the terms of the MIT License.
+This project is licensed under the terms of the [MIT License](LICENSE).
