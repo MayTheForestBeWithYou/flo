@@ -180,7 +180,7 @@ mod tests {
     fn test_release_start_without_optional_name() {
         let args = vec!["flo", "release", "start"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Release(release_cmd) => match release_cmd.command {
                 ReleaseSubcommand::Start { version } => {
@@ -191,12 +191,12 @@ mod tests {
             _ => panic!("Expected Command::Release, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_release_start_with_optional_name() {
         let args = vec!["flo", "release", "start", "my-release"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Release(release_cmd) => match release_cmd.command {
                 ReleaseSubcommand::Start { version } => {
@@ -207,12 +207,12 @@ mod tests {
             _ => panic!("Expected Command::Release, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_release_finish_without_optional_name() {
         let args = vec!["flo", "release", "finish"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Release(release_cmd) => match release_cmd.command {
                 ReleaseSubcommand::Finish { version } => {
@@ -223,13 +223,13 @@ mod tests {
             _ => panic!("Expected Command::Release, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_release_finish_with_optional_name() {
         let args = vec!["flo", "release", "finish", "my-release"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
-        match  cli.command {
+
+        match cli.command {
             Command::Release(release_cmd) => match release_cmd.command {
                 ReleaseSubcommand::Finish { version } => {
                     assert_eq!(version, Some("my-release".to_string()));
@@ -239,14 +239,14 @@ mod tests {
             _ => panic!("Expected Command::Release, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_hotfix_start_without_optional_name() {
         let args = vec!["flo", "hotfix", "start"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
-            Command::Hotfix(hotfix_cmd) => match  hotfix_cmd.command {
+            Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
                 HotfixSubcommand::Start { version } => {
                     assert_eq!(version, None);
                 }
@@ -255,12 +255,12 @@ mod tests {
             _ => panic!("Expected Command::Hotfix, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_hotfix_start_with_optional_name() {
         let args = vec!["flo", "hotfix", "start", "my-hotfix"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
                 HotfixSubcommand::Start { version } => {
@@ -271,12 +271,12 @@ mod tests {
             _ => panic!("Expected Command::Hotfix, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_hotfix_finish_without_optional_name() {
         let args = vec!["flo", "hotfix", "finish"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
                 HotfixSubcommand::Finish { version } => {
@@ -287,12 +287,12 @@ mod tests {
             _ => panic!("Expected Command::Hotfix, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_hotfix_finish_with_optional_name() {
         let args = vec!["flo", "hotfix", "finish", "my-hotfix"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
                 HotfixSubcommand::Finish { version } => {
@@ -340,16 +340,16 @@ mod tests {
             _ => panic!("Expected Plugins::List, but got something else."),
         }
     }
-    
+
     #[test]
     fn test_config_command() {
         let args = vec!["flo", "config", "debug"];
         let cli = Cli::try_parse_from(args).unwrap();
-        
+
         match cli.command {
             Command::Config(config_cmd) => {
-                assert!(matches!(config_cmd, ConfigCommand::Debug))
-            },
+                assert!(matches!(config_cmd, ConfigCommand::Debug));
+            }
             _ => panic!("Expected ConfigCommand::Debug, but got something else."),
         }
     }
