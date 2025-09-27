@@ -54,17 +54,17 @@ We use the **GitFlow** methodology to develop Flo itself. This means all new dev
 3.  **Write Code & Tests:** Make your changes. Remember to add or update tests to cover your changes! Our project has two types of tests:
     * **Unit tests**: Fast, in-memory tests that have no external dependencies.
     * **Integration tests**: Slower tests that require external dependencies (like `git`) and are marked with a feature flag.
-4.  **Follow Coding Standards:** Before committing, you should run the fast test suite. Before creawting a pull request, you should run the full suite:
+4.  **Follow Coding Standards:** To make quality checks easy and consistent, we use the `just` command runner. You can install it by following the instructions at [the `just` repository](https://github.com/casey/just).
+    <br>**Before submitting a Pull Request, please run the master check command from the root of the repository:**
     ```bash
-    # Run the fast, default test suite (good for quick checks)
-    cargo test --workspace
-    
-    # Run the COMPLETE test suite, including integration tests (run before PR)
-    cargo test --workspace --features test-integration
-    
-    # This command formats, lints, and tests the entire workspace (Good for quick development feedback loop).
-    cargo fmt --all && cargo clippy --workspace -- -D warnings && cargo test --workspace
+    # This single command will format, lint, and run the complete test suite.
+    just check
     ```
+    You can slo run individual tasks:
+    * `just fmt`: Format your code.
+    * `just lint`: Run the linter.
+    * `just test-fast`: Run only the quick, dependency-free unit tests.
+    * `just test-all`: Run the complete test suite, including integration tests.
 5.  **Commit Your Changes:** We use the [Conventional Commits](https://www.conventionalcommits.org/) standard for our commit messages.
 6.  **Submit a Pull Request:** Push your branch to your fork and open a pull request against the `develop` branch of the main repository. Please fill out the PR template.
 
