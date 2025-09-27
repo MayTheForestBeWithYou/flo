@@ -19,7 +19,7 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Initialize a new repisotry for use with Flo and `GitFlow`.
+    /// Initialize a new repository for use with Flo and `GitFlow`.
     Init,
 
     /// Start, finish, or manage feature branches.
