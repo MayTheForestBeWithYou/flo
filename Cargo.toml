@@ -2,6 +2,7 @@
 members = [
     "flo",
     "flo-api",
+    "flo-cli",
     "flo-pdk",
     "plugins/flo-plugin-dummy"
 ]

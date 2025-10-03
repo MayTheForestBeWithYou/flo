@@ -1,4 +1,8 @@
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
+use flo::app;
+use flo::app::ExecContext;
+use flo::commands::AppCommand;
+use flo::git::types::GitOutput;
 
 /// Flo: Your friendly, interactive guide through the streams of `GitFlow`.
 #[derive(Parser, Debug)]
@@ -6,7 +10,7 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     /// The command to run.
     #[command(subcommand)]
-    pub command: Command,
+    pub command: Option<Command>,
 
     /// Run in non-interactive mode (for scripting).
     #[arg(long, global = true)]
@@ -60,7 +64,7 @@ pub enum FeatureSubcommand {
     /// Finish the current or a specified feature branch.
     Finish {
         /// The name of the feature to finish. If omitted, uses the current branch.
-        name: Option<String>,
+        name: String,
     },
 }
 
@@ -122,6 +126,55 @@ pub enum ConfigCommand {
     Debug,
 }
 
+pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+
+    let context = ExecContext {
+        non_interactive: cli.non_interactive,
+    };
+
+    let command;
+
+    if cli.continue_operation {
+        if cli.command.is_some() {
+            return Err("A subcommand cannot be used with the --continue flag".into());
+        }
+        command = AppCommand::Continue {};
+    } else if let Some(subcommand) = cli.command {
+        command = match subcommand {
+            Command::Init => AppCommand::Init {},
+            Command::Feature(action) => match action.command {
+                FeatureSubcommand::Start { name } => AppCommand::FeatureStart { name },
+                FeatureSubcommand::Finish { name } => AppCommand::FeatureFinish { name },
+            },
+            Command::Release(action) => match action.command {
+                ReleaseSubcommand::Start { version } => AppCommand::ReleaseStart { version },
+                ReleaseSubcommand::Finish { version } => AppCommand::ReleaseFinish { version },
+            },
+            Command::Hotfix(action) => match action.command {
+                HotfixSubcommand::Start { version } => AppCommand::HotfixStart { version },
+                HotfixSubcommand::Finish { version } => AppCommand::HotfixFinish { version },
+            },
+            Command::Status => AppCommand::Status {},
+            Command::Plugins(PluginCommand::List) => AppCommand::PluginList {},
+            Command::Config(ConfigCommand::Debug) => AppCommand::Config {},
+        };
+    } else {
+        Cli::command().print_help()?;
+        return Ok(());
+    };
+
+    let mut rx = app::execute(command, context).await?;
+
+    while let Some(output) = rx.recv().await {
+        print_output(output);
+    }
+
+    Ok(())
+}
+
+fn print_output(output: GitOutput) {}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -134,7 +187,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Feature(feature_cmd) => match feature_cmd.command {
+            Some(Command::Feature(feature_cmd)) => match feature_cmd.command {
                 FeatureSubcommand::Start { name } => {
                     assert_eq!(name, "my-cool-feature");
                 }
@@ -150,25 +203,9 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Feature(feature_cmd) => match feature_cmd.command {
+            Some(Command::Feature(feature_cmd)) => match feature_cmd.command {
                 FeatureSubcommand::Finish { name } => {
-                    assert_eq!(name, Some("my-cool-feature".to_string()));
-                }
-                _ => panic!("Expected Feature::Finish, but got something else."),
-            },
-            _ => panic!("Expected Command::Feature, but got something else."),
-        }
-    }
-
-    #[test]
-    fn test_feature_finish_without_optional_name() {
-        let args = vec!["flo", "feature", "finish"];
-        let cli = Cli::try_parse_from(args).unwrap();
-
-        match cli.command {
-            Command::Feature(feature_cmd) => match feature_cmd.command {
-                FeatureSubcommand::Finish { name } => {
-                    assert_eq!(name, None);
+                    assert_eq!(name, "my-cool-feature".to_string());
                 }
                 _ => panic!("Expected Feature::Finish, but got something else."),
             },
@@ -182,7 +219,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Release(release_cmd) => match release_cmd.command {
+            Some(Command::Release(release_cmd)) => match release_cmd.command {
                 ReleaseSubcommand::Start { version } => {
                     assert_eq!(version, None);
                 }
@@ -198,7 +235,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Release(release_cmd) => match release_cmd.command {
+            Some(Command::Release(release_cmd)) => match release_cmd.command {
                 ReleaseSubcommand::Start { version } => {
                     assert_eq!(version, Some("my-release".to_string()));
                 }
@@ -214,7 +251,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Release(release_cmd) => match release_cmd.command {
+            Some(Command::Release(release_cmd)) => match release_cmd.command {
                 ReleaseSubcommand::Finish { version } => {
                     assert_eq!(version, None);
                 }
@@ -230,7 +267,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Release(release_cmd) => match release_cmd.command {
+            Some(Command::Release(release_cmd)) => match release_cmd.command {
                 ReleaseSubcommand::Finish { version } => {
                     assert_eq!(version, Some("my-release".to_string()));
                 }
@@ -246,7 +283,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
+            Some(Command::Hotfix(hotfix_cmd)) => match hotfix_cmd.command {
                 HotfixSubcommand::Start { version } => {
                     assert_eq!(version, None);
                 }
@@ -262,7 +299,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
+            Some(Command::Hotfix(hotfix_cmd)) => match hotfix_cmd.command {
                 HotfixSubcommand::Start { version } => {
                     assert_eq!(version, Some("my-hotfix".to_string()));
                 }
@@ -278,7 +315,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
+            Some(Command::Hotfix(hotfix_cmd)) => match hotfix_cmd.command {
                 HotfixSubcommand::Finish { version } => {
                     assert_eq!(version, None);
                 }
@@ -294,7 +331,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Hotfix(hotfix_cmd) => match hotfix_cmd.command {
+            Some(Command::Hotfix(hotfix_cmd)) => match hotfix_cmd.command {
                 HotfixSubcommand::Finish { version } => {
                     assert_eq!(version, Some("my-hotfix".to_string()));
                 }
@@ -323,7 +360,7 @@ mod tests {
 
     #[test]
     fn test_global_continue_operation_flag() {
-        let args = vec!["flo", "--continue", "feature", "finish"];
+        let args = vec!["flo", "--continue"];
         let cli = Cli::try_parse_from(args).unwrap();
         assert!(cli.continue_operation);
     }
@@ -334,7 +371,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Plugins(plugin_cmd) => {
+            Some(Command::Plugins(plugin_cmd)) => {
                 assert!(matches!(plugin_cmd, PluginCommand::List));
             }
             _ => panic!("Expected Plugins::List, but got something else."),
@@ -347,7 +384,7 @@ mod tests {
         let cli = Cli::try_parse_from(args).unwrap();
 
         match cli.command {
-            Command::Config(config_cmd) => {
+            Some(Command::Config(config_cmd)) => {
                 assert!(matches!(config_cmd, ConfigCommand::Debug));
             }
             _ => panic!("Expected ConfigCommand::Debug, but got something else."),
